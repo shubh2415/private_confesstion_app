@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>anonymousworld.com</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .chat-container {
+      background: #fff;
+      width: 500px;
+      height: 600px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header h3 {
+      margin: 0;
+    }
+
+    .profile {
+      text-align: center;
+    }
+
+    .profile img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .profile span {
+      display: block;
+      font-size: 12px;
+      margin-top: 2px;
+      color: white;
+    }
+
+    .chat-messages {
+      flex-grow: 1;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .message {
+      background-color: #e0e0e0;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .message-content {
+      max-width: 70%;
+    }
+
+    .delete-form {
+      margin-left: 10px;
+    }
+
+    .delete-form button {
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .suggestion-form button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .suggestion {
+      margin-left: 20px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .chat-input {
+      position: relative;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+    }
+
+    textarea {
+      width: 100%;
+      height: 60px;
+      padding: 10px 40px 10px 10px;
+      resize: none;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .send-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 30px;
+      text-align: center;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="chat-header">
+    <h3>Welcome To The Anonymous World</h3>
+    <div class="profile">
+     <img src="{{ url_for('static', filename='user.avif') }}" alt="Profile">
+      <span>{{ session['user_name'] }}</span>
+    </div>
+  </div>
+  <div class="chat-messages">
+    {% for msg in messages %}
+      <div class="message">
+        <div class="message-content">
+          <strong>Ann{{ msg[2] }}:</strong> {{ msg[1] }}
+          {% if msg[0] in suggestions %}
+            {% for suggestion in suggestions[msg[0]] %}
+              <div class="suggestion">Suggestion by Ann{{ suggestion[1] }}: {{ suggestion[0] }}</div>
+            {% endfor %}
+          {% endif %}
+        </div>
+        {% if user_id == msg[2] %}
+          <form method="POST" action="{{ url_for('delete_message', message_id=msg[0]) }}" class="delete-form">
+            <button type="submit">Delete</button>
+          </form>
+        {% else %}
+          <form method="POST" action="{{ url_for('send_suggestion') }}" class="suggestion-form">
+            <input type="hidden" name="message_id" value="{{ msg[0] }}">
+            <input type="text" name="suggestion_text" placeholder="Suggest..." style="width: 120px;">
+            <button type="submit">➤</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  <form method="POST" action="{{ url_for('send_message') }}" class="chat-input">
+    <textarea name="message" placeholder="Type a message..." required></textarea>
+    <button class="send-btn" type="submit">➤</button>
+  </form>
+</div>
+</body>
+</html>
