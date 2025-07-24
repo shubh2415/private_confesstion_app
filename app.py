@@ -1,15 +1,23 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
+import os
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.secret_key = 'secretkey'
 
 def get_db_connection():
+    # Render.com se milne wala DATABASE_URL istemal karein
+    database_url = os.environ.get('DATABASE_URL')
+    
+    # URL ko parse karein
+    url = urlparse(database_url)
+    
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="flask_app"
+        host=url.hostname,
+        user=url.username,
+        password=url.password,
+        database=url.path[1:] # path se '/' hatane ke liye
     )
 
 @app.route('/')
