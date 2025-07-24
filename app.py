@@ -4,20 +4,31 @@ import os
 from urllib.parse import urlparse
 
 app = Flask(__name__)
-app.secret_key = 'secretkey'
+
+# Environment variable se secret key lein, agar na mile toh default istemal karein
+# Render par SECRET_KEY set karna zaroori hai
+app.secret_key = os.environ.get('SECRET_KEY', 'ek-bahut-hi-strong-default-key-local')
 
 def get_db_connection():
-    # Render.com se milne wala DATABASE_URL istemal karein
-    database_url = os.environ.get('DATABASE_URL')
+    """Database se connection banata hai."""
+    # Render par set kiye gaye DATABASE_URI environment variable ko padhein
+    db_uri = os.environ.get('DATABASE_URI')
+
+    if not db_uri:
+        # Agar URI set nahi hai toh error de
+        raise ValueError("DATABASE_URI environment variable set nahi hai")
+
+    # URI ko parse karke uske hisson ko alag karein
+    # Format: mysql://user:password@host:port/database
+    result = urlparse(db_uri)
     
-    # URL ko parse karein
-    url = urlparse(database_url)
-    
+    # Connection banayein
     return mysql.connector.connect(
-        host=url.hostname,
-        user=url.username,
-        password=url.password,
-        database=url.path[1:] # path se '/' hatane ke liye
+        host=result.hostname,
+        user=result.username,
+        password=result.password,
+        port=result.port,
+        database=result.path[1:]  # path se shuru ka '/' hatane ke liye
     )
 
 @app.route('/')
@@ -58,9 +69,10 @@ def signup_user():
         cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, password))
         conn.commit()
         msg = "Signup successful! You can go back and login."
-    except:
+    except mysql.connector.Error:
         msg = "Error: Email already exists"
-    conn.close()
+    finally:
+        conn.close()
 
     return render_template('signup.html', msg=msg)
 
@@ -73,15 +85,10 @@ def welcome():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT m.id, m.content, m.user_id FROM messages m
-        ORDER BY m.id ASC
-    """)
+    cursor.execute("SELECT m.id, m.content, m.user_id FROM messages m ORDER BY m.id ASC")
     messages = cursor.fetchall()
 
-    cursor.execute("""
-        SELECT s.message_id, s.suggestion_text, s.suggested_by FROM suggestions s
-    """)
+    cursor.execute("SELECT s.message_id, s.suggestion_text, s.suggested_by FROM suggestions s")
     suggestion_data = cursor.fetchall()
     conn.close()
 
@@ -154,4 +161,5 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Production mein debug mode hamesha False hona chahiye
+    app.run(debug=False)
