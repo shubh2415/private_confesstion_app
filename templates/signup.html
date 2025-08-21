@@ -3,44 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Signup Page</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .form-box {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px #ccc;
-            width: 300px;
-            text-align: center;
-        }
-        input {
-            width: 90%;
-            padding: 8px;
-            margin: 10px 0;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .msg {
-            margin-top: 15px;
-            font-size: 14px;
-            color: green;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> <!-- style.css include kiya -->
 </head>
 <body>
-    <div class="form-box">
+    <div class="form-container"> <!-- style.css se form-container class use ki -->
         <h2>Signup</h2>
         <form method="POST">
             <input type="text" name="name" placeholder="Enter Name" required>
@@ -48,9 +14,7 @@
             <input type="password" name="password" placeholder="Enter Password" required>
             <button type="submit">Register</button>
         </form>
-        {% if msg %}
-        <div class="msg">{{ msg }}</div>
-        {% endif %}
+        <!-- Msg display hata diya gaya hai, ab message login page par dikhega -->
     </div>
 </body>
 </html>
