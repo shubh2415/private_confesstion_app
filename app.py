@@ -8,19 +8,30 @@ app = Flask(__name__)
 app.secret_key = 'secretkey' # Flash messages ke liye secret key zaroori hai
 
 def get_db_connection():
-    # Local machine setup ke liye database credentials seedhe daal rahe hain
-    # 'your_password' ki jagah apna asli MySQL password daalein
-    # 'defaultdb' ki jagah apne database ka naam daalein agar alag hai
-    return mysql.connector.connect(
-        host='localhost',    # Aapke MySQL server ka host, aksar 'localhost' hota hai
-        user='root',         # Aapke MySQL user ka naam
-        password='', # <-- Yahan apna MySQL password daalein
-        database='defaultdb' # <-- Yahan apne database ka naam daalein
-    )
+    # Render.com se milne wala DATABASE_URL istemal karein
+    database_url = os.environ.get('DATABASE_URL')
+    
+    # Agar DATABASE_URL set nahi hai (local testing ke liye), toh default local config use karein
+    if not database_url:
+        return mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='your_password', # <-- Yahan apna asli MySQL password daalein local ke liye
+            database='defaultdb'
+        )
+    else:
+        # URL ko parse karein Render deployment ke liye
+        url = urlparse(database_url)
+        return mysql.connector.connect(
+            host=url.hostname,
+            user=url.username,
+            password=url.password,
+            database=url.path[1:], # path se '/' hatane ke liye
+            port=url.port if url.port else 3306 # Port ko bhi parse karein agar URL mein hai
+        )
 
 @app.route('/')
 def login():
-    # Flash messages ko render karein
     return render_template('login.html', error=None)
 
 @app.route('/login', methods=['POST'])
@@ -39,8 +50,8 @@ def login_user():
         session['user_name'] = user[1]
         return redirect(url_for('welcome'))
     else:
-        flash("Invalid credentials. Please try again.", "error") # Error message for login
-        return render_template('login.html') # Flash messages ke liye redirect na karein
+        flash("Invalid credentials. Please try again.", "error")
+        return render_template('login.html')
 
 @app.route('/signup')
 def signup():
@@ -57,7 +68,6 @@ def signup_user():
     try:
         cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, password))
         conn.commit()
-        # Signup successful hone par login page par redirect karein aur message flash karein
         flash("Signup successful! Please login.", "success")
         return redirect(url_for('login'))
     except mysql.connector.Error as err:
@@ -68,7 +78,7 @@ def signup_user():
     finally:
         conn.close()
 
-    return render_template('signup.html') # Agar signup mein error aaye to signup page par hi rahe
+    return render_template('signup.html')
 
 @app.route('/welcome')
 def welcome():
@@ -102,7 +112,6 @@ def welcome():
                            messages=messages,
                            suggestions=suggestions)
 
-# Naya route description page ke liye
 @app.route('/app_details')
 def app_details():
     if 'user_id' not in session:
@@ -158,7 +167,6 @@ def delete_message(message_id):
         cursor.execute("DELETE FROM messages WHERE id = %s", (message_id,))
         conn.commit()
     else:
-        # User trying to delete someone else's message
         flash("You can only delete your own messages.", "error")
 
     conn.close()
