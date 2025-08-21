@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>App Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* app_details page ke liye specific style */
+        .details-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px #aaa;
+            width: 400px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .details-container h2 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .details-container p {
+            margin: 5px 0;
+            font-size: 1.1em;
+            color: #333;
+        }
+        .details-container a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .details-container .back-button {
+            background: #6c757d; /* Grey color for back button */
+            margin-top: 20px;
+            width: auto; /* Adjust width as needed */
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none; /* Remove underline */
+            font-size: 1em;
+        }
+        .details-container .back-button:hover {
+            background: #5a6268;
+        }
+        /* Founder image styling */
+        .founder-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .founder-info img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%; /* Gol shape ke liye */
+            object-fit: cover; /* Image ko crop karega aur sahi proportion rakhega */
+            border: 2px solid #007bff; /* Border optional, profile se match karne ke liye */
+            margin-bottom: 5px;
+        }
+        .founder-info p {
+            font-weight: bold;
+            color: #007bff; /* Founder text ka color blue */
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="details-container">
+        <h2>App Details</h2>
+        <p><strong>Version:</strong> 1.0.0</p>
+        <div class="founder-info">
+            <!-- Yahan founder ki image add ki gayi hai, static folder se load hogi -->
+            <img src="{{ url_for('static', filename='1.jpg') }}" alt="Founder Image">
+            <p>Founder</p>
+        </div>
+        <p><strong>Mail Support:</strong> <a href="mailto:shubhamteli9990@gmail.com">support:shubhamteli9990gmail.com</a></p>
+        <a href="{{ url_for('welcome') }}" class="back-button">Back to Chat</a>
+    </div>
+</body>
+</html>
