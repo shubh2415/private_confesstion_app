@@ -1,3 +1,4 @@
+/* static/style.css */
 body {
     margin: 0;
     padding: 0;
@@ -50,4 +51,160 @@ a {
     margin-top: 15px;
     color: #007bff;
     text-decoration: none;
+}
+
+/* Welcome Page Specific Styles */
+.chat-container {
+    background: #fff;
+    width: 500px;
+    height: 600px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #ccc;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-header {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header h3 {
+    margin: 0;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile {
+    text-align: center;
+}
+
+.profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.profile span {
+    display: block;
+    font-size: 12px;
+    margin-top: 2px;
+    color: white;
+}
+
+/* Description Button Styling - ab yeh 'a' tag hai */
+.description-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff; /* Blue color for consistency */
+    color: white;
+    border: none; /* No border for a cleaner look, similar to profile */
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    text-decoration: none; /* Link underline hataane ke liye */
+    box-sizing: border-box; /* Padding and border included in width/height */
+}
+
+.description-btn:hover {
+    background-color: #0056b3;
+}
+
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.message {
+    background-color: #e0e0e0;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.message-content {
+    max-width: 70%;
+}
+
+.delete-form {
+    margin-left: 10px;
+}
+
+.delete-form button {
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.suggestion-form button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.suggestion {
+    margin-left: 20px;
+    font-size: 13px;
+    color: #555;
+}
+
+.chat-input {
+    position: relative;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+}
+
+textarea {
+    width: 100%;
+    height: 60px;
+    padding: 10px 40px 10px 10px;
+    resize: none;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.send-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 30px;
+    text-align: center;
+    padding: 0;
 }
