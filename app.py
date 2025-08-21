@@ -5,33 +5,36 @@ import os
 from urllib.parse import urlparse
 
 app = Flask(__name__)
-app.secret_key = 'secretkey' # Flash messages ke liye secret key zaroori hai
+
+# Environment variable se secret key lein, agar na mile toh default istemal karein
+# Render par SECRET_KEY set karna zaroori hai
+app.secret_key = os.environ.get('SECRET_KEY', 'ek-bahut-hi-strong-default-key-local') # Secret key ko environment variable se lenge
 
 def get_db_connection():
-    # Render.com se milne wala DATABASE_URL istemal karein
-    database_url = os.environ.get('DATABASE_URL')
+    """Database se connection banata hai."""
+    # Render par set kiye gaye DATABASE_URI environment variable ko padhein
+    db_uri = os.environ.get('DATABASE_URI')
+
+    if not db_uri:
+        # Agar URI set nahi hai toh error dega, production mein yeh set hona chahiye
+        raise ValueError("DATABASE_URI environment variable set nahi hai. Please set it on Render or locally.")
+
+    # URI ko parse karke uske hisson ko alag karein
+    # Format: mysql://user:password@host:port/database
+    result = urlparse(db_uri)
     
-    # Agar DATABASE_URL set nahi hai (local testing ke liye), toh default local config use karein
-    if not database_url:
-        return mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='your_password', # <-- Yahan apna asli MySQL password daalein local ke liye
-            database='defaultdb'
-        )
-    else:
-        # URL ko parse karein Render deployment ke liye
-        url = urlparse(database_url)
-        return mysql.connector.connect(
-            host=url.hostname,
-            user=url.username,
-            password=url.password,
-            database=url.path[1:], # path se '/' hatane ke liye
-            port=url.port if url.port else 3306 # Port ko bhi parse karein agar URL mein hai
-        )
+    # Connection banayein
+    return mysql.connector.connect(
+        host=result.hostname,
+        user=result.username,
+        password=result.password,
+        port=result.port,
+        database=result.path[1:]   # path se shuru ka '/' hatane ke liye
+    )
 
 @app.route('/')
 def login():
+    # Flash messages ko render karein
     return render_template('login.html', error=None)
 
 @app.route('/login', methods=['POST'])
@@ -50,8 +53,8 @@ def login_user():
         session['user_name'] = user[1]
         return redirect(url_for('welcome'))
     else:
-        flash("Invalid credentials. Please try again.", "error")
-        return render_template('login.html')
+        flash("Invalid credentials. Please try again.", "error") # Error message for login
+        return render_template('login.html') # Flash messages ke liye redirect na karein
 
 @app.route('/signup')
 def signup():
@@ -68,6 +71,7 @@ def signup_user():
     try:
         cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, password))
         conn.commit()
+        # Signup successful hone par login page par redirect karein aur message flash karein
         flash("Signup successful! Please login.", "success")
         return redirect(url_for('login'))
     except mysql.connector.Error as err:
@@ -78,7 +82,7 @@ def signup_user():
     finally:
         conn.close()
 
-    return render_template('signup.html')
+    return render_template('signup.html') # Agar signup mein error aaye to signup page par hi rahe
 
 @app.route('/welcome')
 def welcome():
@@ -112,6 +116,7 @@ def welcome():
                            messages=messages,
                            suggestions=suggestions)
 
+# Naya route description page ke liye
 @app.route('/app_details')
 def app_details():
     if 'user_id' not in session:
@@ -178,4 +183,5 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Production mein debug mode hamesha False hona chahiye
+    app.run(debug=False)
