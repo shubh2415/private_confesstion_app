@@ -1,38 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+# app.py
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import mysql.connector
 import os
 from urllib.parse import urlparse
 
 app = Flask(__name__)
-
-# Environment variable se secret key lein, agar na mile toh default istemal karein
-# Render par SECRET_KEY set karna zaroori hai
-app.secret_key = os.environ.get('SECRET_KEY', 'ek-bahut-hi-strong-default-key-local')
+app.secret_key = 'secretkey' # Flash messages ke liye secret key zaroori hai
 
 def get_db_connection():
-    """Database se connection banata hai."""
-    # Render par set kiye gaye DATABASE_URI environment variable ko padhein
-    db_uri = os.environ.get('DATABASE_URI')
-
-    if not db_uri:
-        # Agar URI set nahi hai toh error de
-        raise ValueError("DATABASE_URI environment variable set nahi hai")
-
-    # URI ko parse karke uske hisson ko alag karein
-    # Format: mysql://user:password@host:port/database
-    result = urlparse(db_uri)
-    
-    # Connection banayein
+    # Local machine setup ke liye database credentials seedhe daal rahe hain
+    # 'your_password' ki jagah apna asli MySQL password daalein
+    # 'defaultdb' ki jagah apne database ka naam daalein agar alag hai
     return mysql.connector.connect(
-        host=result.hostname,
-        user=result.username,
-        password=result.password,
-        port=result.port,
-        database=result.path[1:]  # path se shuru ka '/' hatane ke liye
+        host='localhost',    # Aapke MySQL server ka host, aksar 'localhost' hota hai
+        user='root',         # Aapke MySQL user ka naam
+        password='', # <-- Yahan apna MySQL password daalein
+        database='defaultdb' # <-- Yahan apne database ka naam daalein
     )
 
 @app.route('/')
 def login():
+    # Flash messages ko render karein
     return render_template('login.html', error=None)
 
 @app.route('/login', methods=['POST'])
@@ -51,11 +39,12 @@ def login_user():
         session['user_name'] = user[1]
         return redirect(url_for('welcome'))
     else:
-        return render_template('login.html', error="Invalid credentials")
+        flash("Invalid credentials. Please try again.", "error") # Error message for login
+        return render_template('login.html') # Flash messages ke liye redirect na karein
 
 @app.route('/signup')
 def signup():
-    return render_template('signup.html', msg=None)
+    return render_template('signup.html')
 
 @app.route('/signup', methods=['POST'])
 def signup_user():
@@ -68,13 +57,18 @@ def signup_user():
     try:
         cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, password))
         conn.commit()
-        msg = "Signup successful! You can go back and login."
-    except mysql.connector.Error:
-        msg = "Error: Email already exists"
+        # Signup successful hone par login page par redirect karein aur message flash karein
+        flash("Signup successful! Please login.", "success")
+        return redirect(url_for('login'))
+    except mysql.connector.Error as err:
+        if err.errno == 1062:
+            flash("Error: Email already exists. Please use a different email.", "error")
+        else:
+            flash(f"An unexpected error occurred: {err}", "error")
     finally:
         conn.close()
 
-    return render_template('signup.html', msg=msg)
+    return render_template('signup.html') # Agar signup mein error aaye to signup page par hi rahe
 
 @app.route('/welcome')
 def welcome():
@@ -85,10 +79,15 @@ def welcome():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT m.id, m.content, m.user_id FROM messages m ORDER BY m.id ASC")
+    cursor.execute("""
+        SELECT m.id, m.content, m.user_id FROM messages m
+        ORDER BY m.id ASC
+    """)
     messages = cursor.fetchall()
 
-    cursor.execute("SELECT s.message_id, s.suggestion_text, s.suggested_by FROM suggestions s")
+    cursor.execute("""
+        SELECT s.message_id, s.suggestion_text, s.suggested_by FROM suggestions s
+    """)
     suggestion_data = cursor.fetchall()
     conn.close()
 
@@ -102,6 +101,13 @@ def welcome():
                            user_id=user_id,
                            messages=messages,
                            suggestions=suggestions)
+
+# Naya route description page ke liye
+@app.route('/app_details')
+def app_details():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('app_details.html')
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
@@ -151,6 +157,9 @@ def delete_message(message_id):
         cursor.execute("DELETE FROM suggestions WHERE message_id = %s", (message_id,))
         cursor.execute("DELETE FROM messages WHERE id = %s", (message_id,))
         conn.commit()
+    else:
+        # User trying to delete someone else's message
+        flash("You can only delete your own messages.", "error")
 
     conn.close()
     return redirect(url_for('welcome'))
@@ -161,5 +170,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    # Production mein debug mode hamesha False hona chahiye
-    app.run(debug=False)
+    app.run(debug=True)
